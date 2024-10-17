@@ -41,7 +41,7 @@ dx      =  Length/m   # The size of a grid cell in X direction
 dy      =  Length/m   # The size of a grid cell in Y direction
 
 dT      =  0.0002     # timestep (per hour)
-EndTime =  360*24/Phi # end time (days x hours)
+EndTime =  3600*24/Phi # end time (days x hours)
 NoFrames=  360        # Number of frames displayed during the entire simulation
 
 frac    =  0.05       # Initial settings: fraction of area filled with mussels
@@ -66,6 +66,10 @@ OpenWindow <- function(width, height,...)
 }
 
 # --- Initialization of matrices containing the state variables ---------------
+
+TimeRec = MusselRec = d_M_Rec = vector(length=NoFrames)  
+
+jj = 0; # The counter needed for recording data during the run
 
 A = M = dA = dM = matrix(nrow=m,ncol=m)    # The state and rate variables
 
@@ -94,10 +98,15 @@ set.seed(20)  # Making sure the random number generator gives the same values
 # Initial values for the algae and the musels
 A[,]=0.5 
 M=100+(matrix(ncol=m,nrow=m,data=runif(m*m))<=frac)*10 
+load(file = "Mussels.RData")
 
 # Some counters used in the loop below
 Time =  0          # Begin time 
 ii   =  1e6        # Setting the plot counter to max, so that drawing start immediately
+
+
+
+
 
 # --- Setting up the figure ---------------------------------------------------
 
@@ -108,6 +117,7 @@ par(mfrow=c(1,2), mar=c(3, 4, 2, 6) + 0.1) # sets up the margins
 # --- The simulation loop -----------------------------------------------------
 
 while (Time<=EndTime){   # Here the time loop starts   
+  d_M = 0.02 + Time/EndTime*(0.02)
    
   # Calculating local input, uptake, growth, mortality, and fluxes
   drA = (Aup - A)*f - c/h*A*M - V*d_dy(A)
@@ -140,6 +150,11 @@ while (Time<=EndTime){   # Here the time loop starts
 
        ii=0    # Resetting the plot counter
 
+       jj=jj+1 # Increasing the Recorder counter
+       
+       TimeRec[jj] = Time*Phi/24 # The time in days
+       MusselRec[jj] = mean(M)   # Mean mussel biomass
+       d_M_Rec[jj] = d_M
       } 
 
   Time=Time+dT  # Incrementing time with one
@@ -147,4 +162,4 @@ while (Time<=EndTime){   # Here the time loop starts
  
 } # Here the time loop ends
 
-
+plot(d_M_Rec, MusselRec, ylim=c(0,500))
